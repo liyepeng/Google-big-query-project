@@ -1,0 +1,2025 @@
+proc import datafile="C:\Users\yepeng\Downloads\natality_tx2004.csv"
+out=Sasuser.tx2004 DBMS=csv;
+run;
+
+proc sql;
+create table Sasuser.weight_race2004 as
+select weight_pounds,mother_race 
+from  Sasuser.tx2004;
+quit;
+
+proc means data=Sasuser.weight_race2004;
+var  weight_pounds;
+run;
+proc univariate data=Sasuser.weight_race2004 NORMAL PLOT;
+var weight_pounds;
+run;
+
+data weight_race2004;
+set Sasuser.weight_race2004;
+weight=weight_pounds*453.592;
+run;
+proc format;
+value weightfmt
+0- < 1500='ELBW' 1500- <2500='LBW' 2500- <4200='NBW' 4200- <9000='HBW';
+run;
+
+data Sasuser.weight_race2004;
+  set weight_race2004;
+  wightlevel = put (weight,weightfmt.);
+run;
+
+proc sort data=Sasuser.weight_race2004;
+by mother_race;
+run;
+
+proc freq data=Sasuser.weight_race2004;
+tables  wightlevel*mother_race/nocum;
+run;
+
+
+Part 2.
+proc sql;
+create table Sasuser.weight_muti2004 as
+select weight_pounds,is_male,plurality,mother_age,gestation_weeks,cigarettes_per_day,drinks_per_week 
+from  Sasuser.tx2004;
+quit;
+
+data weight_muti2004;
+set Sasuser.weight_muti2004;
+weight=weight_pounds*453.592;
+run;
+proc format;
+value weightfmt
+0- < 1500='ELBW' 1500- <2500='LBW' 2500- <4200='NBW' 4200- <9000='HBW';
+run;
+
+data Sasuser.weight_muti2004(drop=weight);
+  set weight_muti2004;
+  wightlevel = put (weight,weightfmt.);
+run;
+
+proc freq data=Sasuser.weight_muti2004;
+tables  wightlevel*is_male/nocum;
+run;
+
+data Sasuser.weight_muti2004;
+set  Sasuser.weight_muti2004;
+ if mother_age >= 40 then magegroup=4;
+ else if mother_age >= 30 then magegroup=3;
+ else if mother_age >= 20 then magegroup=2;
+ else if mother_age  < = 19 then magegroup=1;
+ run;
+
+ proc freq data=Sasuser.weight_muti2004;
+tables  wightlevel*magegroup/nocum;
+run;
+
+proc sort data=Sasuser.weight_muti2004;
+by wightlevel;
+run;
+
+proc means data=Sasuser.weight_muti2004;
+var  plurality gestation_weeks cigarettes_per_day drinks_per_week;
+by wightlevel;
+run;
+
+(part3)
+
+proc import datafile="C:\Users\yepeng\Downloads\natality_tx2004.csv"
+out=Sasuser.tx2004 DBMS=csv;
+run;
+data Sasuser.tx2004;
+set Sasuser.tx2004;
+weight=453.592*weight_pounds;
+run;
+proc sql;
+create table Sasuser.weight2004 as
+select weight_pounds,mother_race,is_male,plurality,mother_age,gestation_weeks,cigarette_use,alcohol_use,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born,father_race,father_age 
+from  Sasuser.tx2004;
+quit;
+
+data weight2004;
+set Sasuser.weight2004;
+weight=weight_pounds*453.592;
+run;
+proc format;
+value weightfmt
+0- < 1500='ELBW' 1500- <2500='LBW' 2500- <4200='NBW' 4200- <9000='HBW';
+run;
+
+data Sasuser.weight2004(drop=weight);
+  set weight2004;
+  weightlevel = put (weight,weightfmt.);
+run;
+
+data Sasuser.weight2004;
+set  Sasuser.weight2004;
+ if mother_age >= 40 then magegroup=4;
+ else if mother_age >= 30 then magegroup=3;
+ else if mother_age >= 20 then magegroup=2;
+ else if mother_age  < = 19 then magegroup=1;
+ run;
+
+data Sasuser.weight2004;
+set  Sasuser.weight2004;
+ if mother_race =1  then marace="white";
+ else if mother_race =2  then marace="black";
+ else if mother_race =3  then marace="American Indian";
+ else  marace="other";
+ run;
+
+ proc means data=Sasuser.weight_race2004;
+var  weight_pounds;
+run;
+
+proc sort data=Sasuser.weight2004;
+by weightlevel;
+run;
+
+proc freq data=Sasuser.weight2004;
+tables  weightlevel*is_male/ nocum;
+run;
+
+proc means data=Sasuser.weight2004;
+var  plurality gestation_weeks cigarettes_per_day drinks_per_week;
+by weightlevel;
+run;
+
+proc means data=Sasuser.weight2004;
+var  weight_gain_pounds born_alive_alive born_alive_dead born_dead ever_born;
+by weightlevel;
+run;
+
+data Sasuser.weight2004(drop=fgegroup);
+set  Sasuser.weight2004;
+ if father_age >= 50 then fagegroup=5;
+ else if father_age >= 40 then fagegroup=4;
+ else if father_age >= 30 then fagegroup=3;
+ else if father_age  > = 20 then fagegroup=2;
+  else if father_age  < = 19 then fagegroup=1;
+ run;
+
+chapter 4
+proc freq data=Sasuser.weight2004;
+tables  weightlevel*marace/ nocum;
+run;
+
+data mrace;
+input weight_level $ marace $ count @@;
+datalines;
+ABNW Ameri 114 ABNW black 6603 ABNW white 35540 ABNW other 1338
+NW Ameri 757 NW black 35883 NW white 294580 NW other 12122
+;
+run;
+proc print;run;
+proc freq;
+weight count;
+table weight_level*marace/chisq expected deviation cmh cellchi2 measures ;
+run;
+
+proc freq data=Sasuser.weight2004;
+table weightlevel*is_male;
+run;
+data ismale;
+input weight_level $ ismale $ count @@;
+datalines;
+ABNW False 20563 ABNW true 23032 
+NW False 168545 NW true 174797 
+;
+proc print;run;
+
+proc freq;
+weight count;
+table weight_level*ismale/chisq expected deviation cmh cellchi2 measures ;
+run;
+
+proc freq;(2*2 table)
+weight count;
+tables treatment*response/ chisq relrisk riskdiff expected;
+exact or;
+run;
+
+chapter 5
+
+proc freq data=Sasuser.weight2004;
+tables marace*weightlevel/ nocum;
+run;
+
+data mrace;
+input marace $ weight_level  $ count @@;
+datalines;
+Ameri ABNW 114 Ameri NW 757 black ABNW  6603  black NW  35883
+white ABNW  35540  white NW 294580  other ABNW 1338 other NW 12122
+;
+run;
+proc print;run;
+
+proc freq;
+weight count;
+table marace*weight_level/chisq ;
+exact chisq;
+run;
+
+proc freq data=Sasuser.weight2004;
+table is_male*weightlevel;
+run;
+data ismale;
+input ismale $ weight_level $ count @@;
+datalines;
+False ABNW 20563 False NW 168545 
+true ABNW 23032 true NW 174797 
+;
+proc print;run;
+
+proc freq;
+weight count;
+table ismale*weight_level/chisq ;
+exact fisher or;
+run;
+
+proc freq data=Sasuser.weight2004;
+tables magegroup*weightlevel/ nocum;
+run;
+
+data magegroup;
+input magegroup $ weight_level  $ count @@;
+datalines;
+1 ABNW 5880 1 NW 47180 2 ABNW  22373  2 NW  189613
+3 ABNW  14134  3 NW 100268  4 ABNW 1208 4 NW 6281
+;
+run;
+proc print;run;
+
+proc freq;
+weight count;
+table magegroup*weight_level/chisq ;
+exact chisq;
+run;
+
+proc freq data=Sasuser.weight2004;
+tables cigarette_use*weightlevel/ nocum;
+run;
+
+data cigarette_use;
+input cigarette_use $ weight_level  $ count @@;
+datalines;
+False ABNW 40458 False NW 324448 
+true ABNW 3056 true NW 18360 
+;
+run;
+proc print;run;
+
+proc freq;
+weight count;
+table cigarette_use*weight_level/chisq ;
+exact chisq;
+run;
+
+proc freq data=Sasuser.weight2004;
+tables alcohol_use*weightlevel/ nocum;
+run;
+
+data alcoho1_use;
+input alcohol_use $ weight_level  $ count @@;
+datalines;
+False ABNW 40458 False NW 324448 
+true ABNW 3056 true NW 18360 
+
+;
+run;
+proc print;run;
+
+proc freq;
+weight count;
+table alcohol_use*weight_level/chisq ;
+exact chisq;
+run;
+
+proc ttest data=Sasuser.Weight2004;
+var plurality;
+class weightlevel;
+run;
+
+proc ttest data=Sasuser.Weight2004;
+var gestation_weeks;
+class weightlevel;
+run;
+
+proc ttest data=Sasuser.Weight2004;
+var weight_gain_pounds;
+class weightlevel;
+run;
+
+proc ttest data=Sasuser.Weight2004;
+var born_alive_alive;
+class weightlevel;
+run;
+
+proc ttest data=Sasuser.Weight2004;
+var born_alive_dead;
+class weightlevel;
+run;
+
+proc ttest data=Sasuser.Weight2004;
+var born_dead;
+class weightlevel;
+run;
+
+proc ttest data=Sasuser.Weight2004;
+var ever_born;
+class weightlevel;
+run;
+
+6.
+proc import datafile="C:\Users\yepeng\Desktop\probability\natality_tx2004.csv"
+out=Sasuser.ntx2004 DBMS=csv;
+run;
+proc contents data=Sasuser.ntx2004;
+run;
+
+7.
+
+proc import datafile="C:\Users\yepeng\Desktop\probability\natality_tx2004.1.csv"
+out=Sasuser.tx2004_1 DBMS=csv;
+run;
+proc contents data=Sasuser.tx2004_1;
+run;
+data Sasuser.tx2004_1;
+set Sasuser.tx2004_1;
+ if mother_race=1 then mr1=1;
+  else mr1=0;
+run;
+
+data Sasuser.tx2004_1;
+set Sasuser.tx2004_1;
+ if mother_race=2 then mr2=1;
+  else mr2=0;
+run;
+
+data Sasuser.tx2004_1;
+set Sasuser.tx2004_1;
+ if father_race=1 then fr1=1;
+  else fr1=0;
+run;
+
+data Sasuser.tx2004_1;
+set Sasuser.tx2004_1;
+ if father_race=2 then fr2=1;
+  else fr2=0;
+run;
+proc reg data=Sasuser.tx2004_1 PLOTS(maxpoints=40000);
+ model weight_pounds=is_male plurality mr1 mr2 mother_age gestation_weeks cigarette_use cigarettes_per_day alcohol_use drinks_per_week weight_gain_pounds
+       born_alive_alive born_alive_dead born_dead ever_born fr1 fr2 father_age/ vif;
+ run;
+
+PROC LOGISTIC DATA=Sasuser.tx2004_1 DESCENDING;
+   MODEL status=length mass range migr insect diet clutch broods wood upland 
+      water release indiv / SELECTION=STEPWISE SLENTRY=0.15 SLSTAY=0.15; 
+RUN;
+
+proc reg data=Sasuser.tx2004_1 PLOTS(maxpoints=40000);
+ model weight_pounds=is_male plurality mr2 mother_age gestation_weeks drinks_per_week weight_gain_pounds
+       born_alive_alive born_alive_dead born_dead father_age/ vif;
+ run;
+
+practice 8
+
+proc reg data=Sasuser.tx2004_1 PLOTS(maxpoints=40000);
+ model weight_pounds=is_male plurality mr1 mr2 mother_age gestation_weeks weight_gain_pounds 
+ born_alive_alive born_alive_dead  fr1 fr2 father_age/ vif;
+ run;
+
+proc reg data=Sasuser.tx2004_1 PLOTS(maxpoints=40000);
+ model weight_pounds=is_male plurality mr1 mr2 mother_age gestation_weeks weight_gain_pounds 
+ born_alive_alive born_alive_dead  fr1 fr2 father_age/ selection=cp best=10;
+
+ proc reg data=Sasuser.tx2004_1 PLOTS(maxpoints=40000);
+ model weight_pounds=is_male plurality mr1 mr2 mother_age gestation_weeks weight_gain_pounds 
+ born_alive_alive born_alive_dead  fr1 fr2 father_age/ selection=adjrsq best=10;
+
+ proc reg data=Sasuser.tx2004_1 PLOTS(maxpoints=40000);
+ model weight_pounds=is_male plurality mr1 mr2 mother_age gestation_weeks weight_gain_pounds 
+ born_alive_alive born_alive_dead  fr1 fr2 father_age/ selection=forward ;
+
+ proc reg data=Sasuser.tx2004_1 PLOTS(maxpoints=40000);
+ model weight_pounds=is_male plurality mr1 mr2 mother_age gestation_weeks weight_gain_pounds 
+ born_alive_alive born_alive_dead  fr1 fr2 father_age/ selection=backward;
+
+ proc reg data=Sasuser.tx2004_1 PLOTS(maxpoints=40000);
+ model weight_pounds=is_male plurality mr1 mr2 mother_age gestation_weeks weight_gain_pounds 
+ born_alive_alive born_alive_dead  fr1 fr2 father_age/ selection=stepwise;
+ run;
+
+ data Sasuser.Tx2004_1;
+set Sasuser.Tx2004_1;
+weight=weight_pounds*453.592;
+run;
+
+data Sasuser.Tx2004_1;
+set  Sasuser.Tx2004_1;
+ if weight >=4200 then weightlv=0;
+ else if 2500>= weight >= 0 then weightlv=0;
+ else if 4200>= weight >=2500 then weightlv=1;
+ run;
+
+ 
+ data Sasuser.Tx2004_1;
+set  Sasuser.Tx2004_1;
+ if mother_age >= 40 then magegroup=4;
+ else if mother_age >= 30 then magegroup=3;
+ else if mother_age >= 20 then magegroup=2;
+ else if mother_age  < = 19 then magegroup=1;
+ run;
+
+data Sasuser.Tx2004_1;
+set  Sasuser.Tx2004_1;
+ if father_age >= 50 then fagegroup=5;
+ else if father_age >= 40 then fagegroup=4;
+ else if father_age >= 30 then fagegroup=3;
+ else if father_age  > = 20 then fagegroup=2;
+  else if father_age  < = 19 then fagegroup=1;
+ run;
+
+ PROC LOGISTIC DATA=Sasuser.Tx2004_1 DESCENDING;
+   MODEL weightlv=is_male plurality mr1 mr2 mother_age gestation_weeks weight_gain_pounds 
+ born_alive_alive born_alive_dead  fr1 fr2 father_age;  
+ run;
+
+ 
+ PROC LOGISTIC DATA=Sasuser.Tx2004_1 DESCENDING;
+   MODEL weightlv=is_male plurality mr1 mr2 magegroup gestation_weeks weight_gain_pounds 
+ born_alive_alive born_alive_dead  fr1 fr2 fagegroup/SELECTION=STEPWISE SLENTRY=0.15 SLSTAY=0.15;  
+ run;
+
+2015-12-22
+%macro create(howmany);
+   %do i=1969 %to &howmany;
+      data month&i;
+         infile in&i;
+         input product cost date;
+      run;
+   %end;
+%mend create;
+
+%create(1973)
+
+%macro create(howmany);
+   %do i=0 %to &howmany;
+     proc import datafile="C:\Users\yepeng\Documents\natality\&i..csv"
+     out=Sasuser.n&i  DBMS=csv;
+     run;
+   %end;
+%mend create;
+
+%create(2)
+
+2015-12.23
+
+%macro create(howmany);
+   %do i=0 %to &howmany;
+     proc import datafile="C:\Users\yepeng\Documents\natality\&i..csv"
+     out=Sasuser.n&i  DBMS=csv;
+     run;
+   %end;
+%mend create;
+
+%create(24)
+
+%macro create(howmany);
+   %do i=0 %to &howmany;
+   proc sql;
+   create table Sasuser.b&i as
+   select year,month,state,weight_pounds,mother_race,is_male,plurality,mother_age,gestation_weeks,cigarette_use,alcohol_use,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born,father_race,father_age 
+from  Sasuser.A&i;
+   %end;
+%mend create;
+
+%create(24)
+
+%macro create(howmany);
+   %do i=0 %to &howmany;
+   %do j=1 %to &howmany;
+   proc sql;
+   create table Sasuser.weight11 as
+   select year,month,state,weight_pounds,mother_race,is_male,plurality,mother_age,gestation_weeks,cigarette_use,alcohol_use,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born,father_race,father_age 
+from  Sasuser.weight&i
+union
+select year,month,state,weight_pounds,mother_race,is_male,plurality,mother_age,gestation_weeks,cigarette_use,alcohol_use,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born,father_race,father_age 
+from  Sasuser.N2;
+
+data Sasuser.n1;
+ infile "C:\Users\yepeng\Documents\natality\1.csv" delimiter = "," MISSOVER DSD firstobs=2 ;
+input source_year year $ month day wday $ state $ is_male $ child_race weight_pounds plurality apgar_1min apgar_5min mother_residence_state $ mother_race mother_age gestation_weeks lmp $ mother_married $ mother_birth_state $  cigarette_use $ cigarettes_per_day alcohol_use $ drinks_per_week weight_gain_pounds
+       born_alive_alive born_alive_dead born_dead ever_born father_race father_age record_weight ;
+run;
+
+
+12-26-15
+
+%macro create(howmany);
+   %do i=0 %to &howmany;
+     data Sasuser.n&i;
+     infile "C:\Users\yepeng\Documents\natality\&i..csv" delimiter = "," MISSOVER DSD firstobs=2 ;
+     input source_year year $ month day wday $ state $ is_male $ child_race weight_pounds plurality apgar_1min apgar_5min mother_residence_state $ mother_race mother_age gestation_weeks lmp $ mother_married $ mother_birth_state $  cigarette_use $ cigarettes_per_day alcohol_use $ drinks_per_week weight_gain_pounds
+       born_alive_alive born_alive_dead born_dead ever_born father_race father_age record_weight ;
+run;
+   %end;
+%mend create;
+
+%create(24)
+
+%macro create(howmany);
+   %do i=0 %to &howmany;
+   proc sql;
+   create table Sasuser.b&i as
+   select year,month,state,weight_pounds,mother_race,is_male,plurality,mother_age,gestation_weeks,cigarette_use,alcohol_use,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born,father_race,father_age 
+from  Sasuser.n&i;
+   %end;
+%mend create;
+
+%create(24)
+
+%macro create (howmany);
+
+data want;
+  set
+  %do i = 0 %to &howmany;
+
+         Sasuser.B&i     
+     %end; 
+; 
+run;
+%mend create;
+%create(24)
+
+%macro create(howmany);
+   %do i=25 %to &howmany;
+     data Sasuser.n&i;
+     infile "C:\Users\yepeng\Documents\natality\&i..csv" delimiter = "," MISSOVER DSD firstobs=2 ;
+     input source_year year $ month day wday $ state $ is_male $ child_race weight_pounds plurality apgar_1min apgar_5min mother_residence_state $ mother_race mother_age gestation_weeks lmp $ mother_married $ mother_birth_state $  cigarette_use $ cigarettes_per_day alcohol_use $ drinks_per_week weight_gain_pounds
+       born_alive_alive born_alive_dead born_dead ever_born father_race father_age record_weight ;
+run;
+   %end;
+%mend create;
+
+%create(65)
+%macro create(howmany);
+   %do i=25 %to &howmany;
+   proc sql;
+   create table Sasuser.b&i as
+   select year,month,state,weight_pounds,mother_race,is_male,plurality,mother_age,gestation_weeks,cigarette_use,alcohol_use,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born,father_race,father_age 
+from  Sasuser.n&i;
+   %end;
+%mend create;
+
+%create(65)
+
+%macro create (howmany);
+
+data want;
+  set
+  %do i = 25 %to &howmany;
+
+         Sasuser.B&i     
+     %end; 
+; 
+run;
+%mend create;
+%create(65)
+data Sasuser.n1979;
+set want;
+run;
+
+%macro create(howmany);
+   %do i=66 %to &howmany;
+     data Sasuser.n&i;
+     infile "C:\Users\yepeng\Documents\natality\&i..csv" delimiter = "," MISSOVER DSD firstobs=2 ;
+     input source_year year $ month day wday $ state $ is_male $ child_race weight_pounds plurality apgar_1min apgar_5min mother_residence_state $ mother_race mother_age gestation_weeks lmp $ mother_married $ mother_birth_state $  cigarette_use $ cigarettes_per_day alcohol_use $ drinks_per_week weight_gain_pounds
+       born_alive_alive born_alive_dead born_dead ever_born father_race father_age record_weight ;
+run;
+   %end;
+%mend create;
+
+%create(110)
+%macro create(howmany);
+   %do i=66 %to &howmany;
+   proc sql;
+   create table Sasuser.b&i as
+   select year,month,state,weight_pounds,mother_race,is_male,plurality,mother_age,gestation_weeks,cigarette_use,alcohol_use,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born,father_race,father_age 
+from  Sasuser.n&i;
+   %end;
+%mend create;
+
+%create(110)
+
+%macro create (howmany);
+
+data Sasuser.A1989;
+  set
+  %do i = 66 %to &howmany;
+
+         Sasuser.B&i     
+     %end; 
+; 
+run;
+%mend create;
+%create(110)
+
+
+%macro create(howmany);
+   %do i=111 %to &howmany;
+     data Sasuser.n&i;
+     infile "C:\Users\yepeng\Documents\natality\&i..csv" delimiter = "," MISSOVER DSD firstobs=2 ;
+     input source_year year $ month day wday $ state $ is_male $ child_race weight_pounds plurality apgar_1min apgar_5min mother_residence_state $ mother_race mother_age gestation_weeks lmp $ mother_married $ mother_birth_state $  cigarette_use $ cigarettes_per_day alcohol_use $ drinks_per_week weight_gain_pounds
+       born_alive_alive born_alive_dead born_dead ever_born father_race father_age record_weight ;
+run;
+   %end;
+%mend create;
+
+%create(161)
+%macro create(howmany);
+   %do i=111 %to &howmany;
+   proc sql;
+   create table Sasuser.b&i as
+   select year,month,state,weight_pounds,mother_race,is_male,plurality,mother_age,gestation_weeks,cigarette_use,alcohol_use,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born,father_race,father_age 
+from  Sasuser.n&i;
+   %end;
+%mend create;
+
+%create(161)
+%macro create (howmany);
+
+data Sasuser.A1999;
+  set
+  %do i = 111 %to &howmany;
+
+         Sasuser.B&i     
+     %end; 
+; 
+run;
+%mend create;
+%create(161)
+
+12/27/2015
+
+proc sql;
+create table Sasuser.ym1 as
+select *
+from Sasuser.yw
+where weight < 2500 ;
+proc sql;
+create table Sasuser.ym0 as
+select *
+from Sasuser.yw
+where weight >= 2500 ;
+
+proc sql;
+select year,count(weight) as NBcount
+from Sasuser.ym0
+group by year
+order by year;
+
+proc sql;
+select year,count(weight) as LBcount
+from Sasuser.ym1
+group by year
+order by year;
+
+proc sql;
+create  table Sasuser.race as
+select year,weight_pounds,mother_race
+from Sasuser.natality;
+proc sql;
+create  table Sasuser.race1 as
+select *
+from Sasuser.race
+where weight_pounds < 5.5;
+
+proc sql;
+create  table Sasuser.race11 as
+select *
+from Sasuser.race1
+where mother_race=1;
+
+proc sql;
+select year,count(mother_race)
+from Sasuser.race11
+group by year
+order by year ;
+
+proc sql;
+create  table Sasuser.race12 as 
+select *
+from Sasuser.race1
+where mother_race=2;
+
+proc sql;
+select year,count(mother_race) as BLB
+from Sasuser.race12
+group by year
+order by year ;
+
+proc sql;
+create  table Sasuser.race2 as
+select *
+from Sasuser.race
+where weight_pounds >= 5.5;
+
+proc sql;
+create  table Sasuser.race21 as
+select *
+from Sasuser.race2
+where mother_race=1;
+
+proc sql;
+select year,count(mother_race)as WNB
+from Sasuser.race21
+group by year
+order by year ;
+
+proc sql;
+create  table Sasuser.race22 as 
+select *
+from Sasuser.race2
+where mother_race=2;
+
+proc sql;
+select year,count(mother_race)as BNB
+from Sasuser.race22
+group by year
+order by year ;
+
+2016-2-14
+
+data Sasuser.natality1;
+set Sasuser.natality;
+if weight_pounds= . then delete;
+run;
+
+data Sasuser.natality1;
+set Sasuser.natality1;
+if weight_pounds >= 5.5 then weight="NW";
+else weight="LW";
+run;
+
+data Sasuser.natality1(drop=is_male);
+set Sasuser.natality1;
+if is_male ="true" then gender=1;
+else gender=0;
+run;
+
+data Sasuser.natality1;
+set Sasuser.natality1;
+if mother_race =1 then mwhite=1;
+else mwhite=0;
+run;
+
+data Sasuser.natality1(drop=mother_race);
+set Sasuser.natality1;
+if mother_race =2 then mblack=1;
+else mblack=0;
+run;
+
+data Sasuser.natality1(drop=cigarette_use) ;
+set Sasuser.natality1;
+if cigarette_use ="true" then cigarette=1;
+if cigarette_use ="False" then cigarette=0;
+run;
+
+data Sasuser.natality1(drop=alcohol_use);
+set Sasuser.natality1;
+if alcohol_use ="true" then alcohol=1;
+if alcohol_use ="False" then alcohol=0;
+run;
+
+data Sasuser.natality1;
+set Sasuser.natality1;
+if father_race =1 then fwhite=1;
+else fwhite=0;
+run;
+
+data Sasuser.natality1(drop=father_race);
+set Sasuser.natality1;
+if father_race =2 then fblack=1;
+else fblack=0;
+run;
+
+
+2016-2-16
+proc sql;
+create table Sasuser.gender as
+select weight,gender
+from Sasuser.Natality1;
+quit;
+
+proc freq data=Sasuser.gender;
+tables gender*weight/ nocum;
+run;
+
+data gender;
+input gender $ weight $ count @@;
+datalines;
+female LW 5068297 female NW 62000000 male LW 4581427 male NW 65890000
+;
+run;proc print;run;
+
+proc freq order=data; weight count;
+tables gender*weight / riskdiff(CL=(WALD MN)) measures;
+* MN = Miettinen and Nurminen inverted score test;
+run;
+
+data example;
+input group $ outcome $ count @@;
+datalines;
+placebo yes 2 placebo no 18 active yes 7 active no 13
+;
+proc freq order=data; weight count;
+tables group*outcome ;
+exact or riskdiff ; * conservative Santner-Snell approach;
+run;
+proc freq order=data; weight count;
+tables group*outcome ;
+exact riskdiff(method=fmscore);
+* exact unconditional inverting two one-sided score tests;
+run;
+
+data fisher;
+input poured guess count @@;
+datalines;
+1 1 3 1 2 1 2 1 1 2 2 3
+;
+proc freq; weight count;
+tables poured*guess / measures riskdiff;
+exact fisher or / alpha=.05;
+proc logistic descending; freq count;
+model guess = poured / clodds=pl;
+run;
+
+working code:
+
+data gender;
+input gender $ weight count @@;
+datalines;
+female 1 5068297 female 2 62000000 male 1 4581427 male 2 65890000
+;
+run;proc print;run;
+
+proc freq; weight count;
+tables gender*weight / measures riskdiff;
+exact fisher or / alpha=.05;
+proc logistic descending; freq count;
+model gender = weight / clodds=pl;
+run;
+
+data Sasuser.natality1;
+set Sasuser.natality1;
+if 1999< = year  then time=1999;
+run;
+
+proc sql;
+create table Sasuser.natality2 as 
+select *
+from Sasuser.Natality1
+order by time,state;
+quit;
+
+proc sql;
+create table Sasuser.A4 as
+select state,plurality,mother_age,gestation_weeks,weight_gain_pounds,born_alive_alive,born_alive_dead,born_dead,father_age,weight,gender,mwhite,mblack,cigarette,alcohol,fwhite,fblack,time
+from Sasuser.Natality2
+where time=1999
+order by state;
+quit;
+
+
+proc freq data=Sasuser.A4;
+  table state*weight/nocol nofreq nopercent;
+   run;
+
+3/4/2016
+
+data state;
+  do state = 1 to 51;
+       do n = 1 to 4;
+         	input LBW_percent@;	
+			output;
+		 end;
+	  end;
+  drop n;
+datalines;
+5.32	4.59	4.87	5.7
+7.8	7.46	8.58	9.53
+7.25	6.86	7.49	7.92
+6.22	5.85	6.3	6.64
+6	5.75	5.83	6.17
+8.3	7.39	8.01	8.34
+6.83	6.32	6.74	7.14
+9.16	10.43	12.39	10.66
+7.36	6.75	7.51	8.87
+7.55	7.09	7.27	7.86
+8.43	7.81	8.1	8.35
+7.38	6.81	7.03	7.82
+5.31	4.6	5.3	5.81
+5.46	4.6	4.99	5.71
+7.26	6.78	7.29	7.59
+6.22	5.95	6.42	7.14
+6.18	5.68	6.16	6.8
+6.84	6.36	6.75	7.8
+8.4	8.07	9.25	10.44
+6.38	5.47	5.89	6.96
+7.7	7.16	7.66	8.43
+5.74	5.1	5.48	6.17
+7.01	6.62	7.3	7.7
+5.26	4.71	5.19	5.9
+6.75	6.51	7.44	7.95
+8.22	8.16	9.17	10.19
+6.35	5.15	5.48	6.63
+7.95	7.42	8.02	8.39
+5.26	4.96	5.62	6.58
+5.71	5.27	5.91	6.74
+5.98	4.53	4.51	5.67
+7.38	6.48	7.28	7.81
+8.08	6.86	7.05	7.65
+7.65	6.79	7.06	7.3
+7.41	6.95	7.43	7.73
+6.74	6.45	7.33	8.09
+6.91	6.14	6.4	7.25
+5.19	4.92	5.28	5.95
+6.97	6.33	7.03	7.74
+6.53	6.32	6.75	8.05
+8.49	8.22	8.66	9.37
+5.48	4.97	5.58	6.85
+7.58	7.66	8.49	9.17
+6.99	6.37	6.64	7.14
+5.34	5.45	6.14	6.51
+7.31	6.93	7.26	7.74
+6.4	5.57	5.68	5.84
+5.6	4.86	5.09	5.57
+5.55	4.93	5.71	6.25
+6.8	6.4	7.17	8.43
+8	5.94	6.03	6.46
+;run;
+proc print data=state;run;
+
+proc univariate data=state plot normal;
+var LBW_percent;
+run;
+
+proc anova data=state;								*USE PLOT RESID VS MATERIAL;
+  class state;			   			*PLOT RESID VS TEMP; 
+  model LBW_percent= state;
+  means state /hovtest = bartlett;  		*hovtest welch;                           
+run;  quit;
+
+
+proc freq data=Sasuser.Natality2;
+tables plurality*weight/nocol nofreq nopercent;
+run;
+
+3-5-16
+
+data a;
+input plurality LW NW;
+datalines;
+1	7531140	123000000
+2	1719719	1583665
+3	119013	10105
+4	7812	195
+5	1157	96
+;
+run;
+proc print;run;
+
+data plurality;
+  do plurality = 1 to 5;
+    set a;
+	weight=1;
+	count=LW;
+	output;
+    set a;
+    weight=2;
+    count=NW;
+    output;
+	end;
+keep plurality weight count;
+run;
+proc print data=plurality;run;
+
+proc freq data=plurality;
+weight count;
+ tables plurality*weight /chisq cmh1 scores=ridit norow nocol nopercent;
+ test pcorr;
+run;
+
+3-05-2016
+
+proc freq data=Sasuser.Natality2;
+tables fagegroup*weight/nocol nofreq nopercent;
+run;
+
+data b;
+input fgroup LW NW;
+datalines;
+1	416643	4364171
+2	3677571	55740000
+3	2750626	43200000
+4	576655	7128991
+5	2228229	17530000
+;run;
+proc print data=b;run;
+
+data fgroup;
+  do mgroup = 1 to 5;
+    set b;
+	weight="LW";
+	count=LW;
+	output;
+    set a;
+    weight="NW";
+    count=NW;
+    output;
+	end;
+keep fgroup weight count;
+run;
+proc print data=fgroup;run;
+
+proc freq data=fgroup;
+weight count;
+ tables fgroup*weight /chisq cmh1 scores=ridit norow nocol nopercent;
+ test pcorr;
+run;
+
+3-11-2016
+
+proc freq data=Sasuser.Natality2;
+tables mblack*weight/nocol norow nopercent;
+run;
+
+data a;
+input mrace LW NW;
+datalines;
+1	5967627	95880000
+2	2535145	17670000
+3	1146952	14420000
+;
+run;
+data mreace;
+set a;
+weight="LW";
+count=LW;
+output;
+ weight="NW";
+ count=NW;
+ output;
+keep mrace weight count;run;
+proc print;run;
+
+proc freq data=mreace;
+weight count;
+ tables mrace*weight /chisq cmh1 scores=ridit norow nocol nopercent;
+ test pcorr;
+run;
+
+ proc ttest data=Sasuser.Natality2 cochran ci=equal umpu;
+      class weight;
+      var gestation_weeks;
+   run;
+
+2016-3-13
+
+PROC LOGISTIC DATA=Sasuser.Natality2 DESCENDING;
+   MODEL weight=gestation_weeks weight_gain_pounds mwhite mblack magegroup;  
+ run;
+
+2016-3-15
+
+ proc gplot data=Sasuser.Natality2;
+ plot born_dead*weight_pounds;
+ run;
+
+ ods graphics on;
+title 'Fish Measurement Data';
+proc corr data=Sasuser.Natality2 nomiss plots=matrix(histogram);
+   var gestation_weeks weight_gain_pounds born_alive_alive born_alive_dead born_dead ever_born;
+ run;
+ods graphics off;
+
+3-17
+data sasuser.natality2;
+set sasuser.natality2;
+if magegroup=1 then mage1=1; else mage1=0;
+if magegroup=2 then mage2=1; else mage2=0;
+if magegroup=3 then mage3=1; else mage3=0;
+if magegroup=4 then mage4=1; else mage4=0;
+run;
+
+3-23
+
+data Sasuser.Natality2;
+set Sasuser.natality2;
+If gestation_weeks > 37 then gw=3;
+else if gestation_weeks >32 then gw=2;
+
+data Sasuser.Natality2;
+set Sasuser.natality2;
+If plurality > 2 then pl=3;
+else if plurality=2 then pl=2;
+else pl=1;
+run;
+else gw=1;
+run;
+
+data Sasuser.Natality2;
+set Sasuser.natality2;
+if fwhite=1 and fblack=0 then frace=1;
+else if fwhite=0 and fblack=1 then frace=2;
+else frace=3;
+run;
+
+3-26
+proc sql;
+create table Sasuser.AK as
+select *
+from Sasuser.Natality3
+where state='AK';
+quit;
+
+PROC LOGISTIC DATA=Sasuser.AK;
+class gender pl/param=ref;
+   MODEL weight=gender pl;
+   run;
+
+PROC LOGISTIC DATA=Sasuser.AK;
+class gw magegroup mrace/param=ref;
+   MODEL weight=gw magegroup mrace weight_gain_pounds born_alive_alive born_alive_dead born_dead ever_born;  
+ run;
+
+ PROC LOGISTIC DATA=Sasuser.AK;
+class fagegroup frace/param=ref;
+   MODEL weight=fagegroup frace;  
+ run;
+ PROC LOGISTIC DATA=Sasuser.AK;
+class gw magegroup mrace gender pl fagegroup frace/param=ref;
+   MODEL weight=gw magegroup mrace weight_gain_pounds born_alive_alive born_alive_dead gender pl fagegroup frace;  
+ run;
+
+3-27
+data Sasuser.Natality3;
+set Sasuser.Natality3;
+if born_alive_alive >15 then born_alive_alive=.;
+run;
+
+data Sasuser.Natality3;
+set Sasuser.Natality3;
+if born_alive_dead >=1 then bad=1;
+else bad=0;
+run;
+
+data Sasuser.Natality3;
+set Sasuser.Natality3;
+if ever_born >1 then ever_born=1;
+else bd=0;
+run;
+
+proc freq data=Sasuser.Natality4;
+table weight*ever_born/nopercent chisq;
+run;
+
+3-28
+
+proc sql;
+create table Sasuser.AR as
+select *
+from Sasuser.Natality4
+where state='AR';
+quit;
+
+PROC LOGISTIC DATA=Sasuser.AR;
+class gw magegroup mrace baa bad bd ever_born/param=ref;
+   MODEL weight=gw magegroup mrace weight_gain_pounds baa bad bd ever_born;  
+ run;
+
+ PROC LOGISTIC DATA=Sasuser.AR;
+class gw magegroup mrace baa bad bd ever_born frace fagegroup pl gender/param=ref;
+   MODEL weight=gw magegroup mrace weight_gain_pounds baa bad bd ever_born frace fagegroup pl gender;  
+ run;
+
+Final part
+
+4-5/ 4-6
+
+%macro create(howmany);
+   %do i=0 %to &howmany;
+     data Sasuser.n&i;
+     infile "C:\Users\yepeng\Documents\natality\&i..csv" delimiter = "," MISSOVER DSD firstobs=2 ;
+     input source_year year $ month day wday $ state $ is_male $ child_race weight_pounds plurality apgar_1min apgar_5min mother_residence_state $ mother_race mother_age gestation_weeks lmp $ mother_married $ mother_birth_state $  cigarette_use $ cigarettes_per_day alcohol_use $ drinks_per_week weight_gain_pounds
+       born_alive_alive born_alive_dead born_dead ever_born father_race father_age record_weight ;
+run;
+   %end;
+%mend create;
+
+%create(161)
+
+%macro create (howmany);
+
+data Sasuser.Natality;
+  set
+  %do i = 0 %to &howmany;
+
+         Sasuser.n&i     
+     %end; 
+; 
+run;
+%mend create;
+%create(161)
+
+proc sql;
+   create table Sasuser.natality1 as
+   select year,state,weight_pounds,mother_race,is_male,plurality,mother_age,gestation_weeks,mother_married,cigarette_use,cigarettes_per_day,alcohol_use,drinks_per_week,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born,father_race,father_age 
+from  Sasuser.Natality;
+
+quit;
+
+data Sasuser.natality1;
+set Sasuser.natality1;
+if weight_pounds= . then delete;
+run;
+
+data Sasuser.Natality1;
+set  Sasuser.Natality1;
+ if weight_pounds >=5.5 then weight=1;
+ else weight=0;
+ run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if mother_married="false" then mother_married="FALSE";
+if mother_married="true" then mother_married="TRUE";
+run;
+
+ proc freq data=Sasuser.Natality1;
+table weight*mother_married/nopercent chisq;
+run;
+
+ proc freq data=Sasuser.Natality1;
+table weight*cigarette_use/nopercent chisq;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*alcohol_use/nopercent chisq;
+run;
+
+proc ttest data=Sasuser.Natality1;
+class weight;
+var drinks_per_week;
+run;
+
+proc ttest data=Sasuser.Natality1;
+class weight;
+var cigarettes_per_day;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+  if mother_age >=40 then mage=3;
+  else if mother_age >=20 then mage=2;
+  else mage=1;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+  if father_age >=40 then fage=3;
+  else if father_age >=20 then fage=2;
+  else fage=1;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*mage/nopercent chisq;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*fage/nopercent chisq;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+  if mother_race=
+  else if father_age >=20 then fage=2;
+  else fage=1;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*mother_race/nopercent chisq;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*father_race/nopercent chisq;
+run;
+
+4-7
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if mother_race=1 then mrace=1;
+  else if mother_race=2 then mrace=6;
+  else if mother_race=3 then mrace=2
+  else if mother_race=18 then mrace=5;
+  else if mother_race=9 then mrace=4;
+  else if mrace=3;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*mother_race/nopercent chisq;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*father_race/nopercent chisq;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if mother_race=1 then mrace=1;
+  else if mother_race=2 then mrace=6;
+  else if mother_race=3 then mrace=2;
+  else if mother_race=18 then mrace=4;
+  else if mother_race=9 then mrace=5;
+  else  mrace=3;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*mrace/nopercent chisq;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if father_race=1 then frace=1;
+  else if father_race=2 then frace=6;
+  else if father_race=3 then frace=2;
+  else if father_race=18 then frace=4;
+  else if father_race=9 then frace=5;
+  else frace=3;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*frace/nopercent chisq;
+run;
+
+proc freq data=Sasuser.Natality1;
+table weight*ismale/nopercent chisq;
+run;
+
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if is_male="false" then is_male="FALSE";
+if is_male="true" then is_male="TRUE";
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if is_male="FALSE" then is_male=0;
+else if is_male="TRUE" then is_male=1;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if mother_married="FALSE" then mother_married=0;
+else if mother_married="TRUE" then mother_married=1;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if cigarette_use="FALSE" then cigarette_use=0;
+else if cigarette_use="TRUE" then cigarette_use=1;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if alcohol_use="FALSE" then alcohol_use=0;
+else if alcohol_use="TRUE" then alcohol_use=1;
+run;
+
+proc sort data=Sasuser.Natality1;
+by state;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if cigarette_use="false" then cigarette_use=0;
+else if cigarette_use="true" then cigarette_use=1;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if alcohol_use="false" then alcohol_use=0;
+else if alcohol_use="true" then alcohol_use=1;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.natality1;
+If gestation_weeks > 37 then gw=3;
+else if gestation_weeks >32 then gw=2;
+else gw=1;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.natality1;
+If plurality > 2 then pl=3;
+else if plurality=2 then pl=2;
+else pl=1;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if born_alive_alive >=1 then baa=1;
+else baa=0;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if born_alive_dead >=1 then bad=1;
+else bad=0;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if born_dead >=1 then bd=1;
+else bd=0;
+run;
+
+data Sasuser.Natality1;
+set Sasuser.Natality1;
+if ever_born >1 then ever_born=1;
+else ever_born=0;
+run;
+
+proc sql;
+create table Sasuser.Natality3 as
+select state,year,weight,is_male,pl,mage,mrace,mother_married,cigarette_use,alcohol_use,baa,bad,bd,ever_born,gw,fage,frace, weight_gain_pounds
+from Sasuser.Natality1; 
+quit;
+
+PROC LOGISTIC DATA=Sasuser.Natality3;
+class is_male pl gw mage mrace mother_married cigarette_use alcohol_use baa bad bd ever_born fage frace/param=ref;
+   MODEL weight= weight_gain_pounds is_male pl gw mage mrace mother_married cigarette_use alcohol_use baa bad bd ever_born fage frace ;
+   by state;
+ run;
+
+ PROC LOGISTIC DATA=Sasuser.Natality3;
+class  gw mage mrace mother_married cigarette_use alcohol_use baa bad bd ever_born /param=ref;
+   MODEL weight= weight_gain_pounds gw mage mrace mother_married cigarette_use alcohol_use baa bad bd ever_born ;
+   by state;
+ run;
+
+proc sql;
+create table Sasuser.Natality4 as
+select weight_pounds,is_male,plurality,mother_age,mrace,mother_married,cigarettes_per_day,drinks_per_week,baa,bad,bd,ever_born,gestation_weeks,father_age,frace, weight_gain_pounds
+from Sasuser.Natality1; 
+quit;
+
+data Sasuser.Natality4;
+set Sasuser.Natality4;
+array motherace(6) motherace1-motherace6;
+  do i = 1 to 6;
+    motherace(i)=(mrace=i);
+  end;
+drop i;
+run;
+
+data Sasuser.Natality4;
+set Sasuser.Natality4;
+array fatherace(6) fatherace1-fatherace6;
+  do i = 1 to 6;
+    fatherace(i)=(frace=i);
+  end;
+drop i;
+run;
+
+data Sasuser.Natality4;
+set Sasuser.Natality4;
+if is_male=1 then gender=1;
+else if is_male=0 then gender=0;
+run;
+  
+data Sasuser.Natality4;
+set Sasuser.Natality4;
+if mother_married=1 then ma=1;
+else if mother_married=0 then ma=0;
+drop is_male mother_married;
+run;
+  
+
+proc reg data=Sasuser.Natality4;
+model weight_pounds=gender plurality mother_age motherace1 motherace2 motherace3 motherace4 motherace5 motherace6
+      fatherace1 fatherace2 fatherace3 fatherace4 fatherace5 fatherace6 ma cigarettes_per_day drinks_per_week
+      baa bad bd ever_born gestation_weeks father_age weight_gain_pounds/selection= stepwise ;
+run;
+quit;
+
+proc reg data=Sasuser.Natality4;
+model weight_pounds=gender plurality mother_age motherace1 motherace2 motherace3 motherace4 motherace5 motherace6
+      fatherace1 fatherace2 fatherace3 fatherace4 fatherace5 fatherace6 ma cigarettes_per_day drinks_per_week
+      baa bad bd ever_born gestation_weeks father_age weight_gain_pounds;
+run;
+quit;
+
+proc reg data=Sasuser.Natality4;
+model weight_pounds=mother_age motherace1 motherace2 motherace3 motherace4 motherace5 motherace6
+      ma cigarettes_per_day drinks_per_week baa bad bd ever_born gestation_weeks weight_gain_pounds;
+run;
+quit;
+
+proc reg data=Sasuser.Natality4;
+model weight_pounds=mother_age motherace1 motherace2 motherace3 motherace4 motherace5 motherace6
+      ma cigarettes_per_day drinks_per_week baa bad bd ever_born gestation_weeks weight_gain_pounds/ selection=stepwise;
+run;
+quit;
+
+
+data Sasuser.Natality5(keep=y x1-x16);
+set Sasuser.Natality4;
+rename weight_pounds=y mother_age=x1 motherace1=x2 motherace2=x3 motherace3=x4 motherace4=x5 motherace5=x6 motherace6=x7
+       ma=x8  cigarettes_per_day=x9 drinks_per_week=x10 baa=x11 bad=x12 bd=x13 ever_born=x14 gestation_weeks=x15
+      weight_gain_pounds=x16 ;
+run;
+
+data Sasuser.Natality5;
+set Sasuser.Natality5;
+if x6=1 then x=1;
+else if x2=1 then x=1;
+else x=0;
+run;
+
+data Sasuser.Natality6;
+set Sasuser.Natality5;
+drop x2 x6;
+rename x=x2 x7=x6 x8=x7 x9=x8 x10=x9 x11=x10 x12=x11 x13=x12 x14=x13 x15=x14 x16=x15;
+run;
+
+data Sasuser.Natality6;
+set Sasuser.Natality6;
+array x{15} x1-x15;
+run;
+	
+
+%macro regression(a=x, b=x, c=x , d=x);
+
+	proc reg data=proj_4 OUTEST=stat noprint;
+		model y= &a &b &c &d/edf;
+	run;	
+	
+	data stat_1;
+		set stat;
+		f= (_rsq_/_in_) / ((1- _rsq_)/_edf_ );
+		p=1 - probf(f, _in_, _edf_);
+	
+	if p<0.05 then
+	put "mode: Y = &a + &b + &c + &d;" @33 "R_square =" _rsq_  @58 "P_value =" p ;
+	output;
+	run;
+	
+%mend regression;
+
+%macro pick;
+	data _null_;
+		%do i=1 %to 12;
+			%do j=&i+1 %to 13;
+				%do k=&j+1 %to 14;
+					%do l=&k+1 %to 15;
+						%regression(a=x&i, b=x&j, c=x&k, d=x&l);
+					%end;
+				%end;
+			%end;
+		%end;
+
+	run;
+%mend;
+%pick;
+
+quit;
+
+
+4-8
+
+%macro create(howmany);
+   %do i=131 %to &howmany;
+     data Sasuser.n&i;
+     infile "C:\Users\yepeng\Documents\natality\&i..csv" delimiter = "," MISSOVER DSD firstobs=2 ;
+     input source_year year $ month day wday $ state $ is_male $ child_race weight_pounds plurality apgar_1min apgar_5min mother_residence_state $ mother_race mother_age gestation_weeks lmp $ mother_married $ mother_birth_state $  cigarette_use $ cigarettes_per_day alcohol_use $ drinks_per_week weight_gain_pounds
+       born_alive_alive born_alive_dead born_dead ever_born father_race father_age record_weight ;
+run;
+   %end;
+%mend create;
+
+%create(161)
+
+%macro create (howmany);
+
+data Sasuser.Natality7;
+  set
+  %do i = 131 %to &howmany;
+
+         Sasuser.n&i     
+     %end; 
+; 
+run;
+%mend create;
+%create(161)
+
+proc sql;
+   create table Sasuser.natality8 as
+   select year,state,weight_pounds,mother_race,mother_age,gestation_weeks,mother_married,cigarette_use,alcohol_use,weight_gain_pounds,
+       born_alive_alive,born_alive_dead,born_dead,ever_born
+from  Sasuser.Natality7;
+
+quit;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+if mother_race=1 then mrace=1;
+  else if mother_race=2 then mrace=5;
+  else if mother_race=3 then mrace=2£»
+  else if mother_race=18 then mrace=2;
+  else if mother_race=9 then mrace=4;
+  else  mrace=3;
+run;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+array motherace(5) motherace1-motherace5;
+  do i = 1 to 5;
+    motherace(i)=(mrace=i);
+  end;
+drop i;
+run;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+drop mother_race mrace;
+run;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+if mother_married="false" then mother_married="FALSE";
+if mother_married="true" then mother_married="TRUE";
+run;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+if mother_married="FALSE" then mother_married=0;
+else if mother_married="TRUE" then mother_married=1;
+run;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+if mother_married=0 then ma=0;
+else if mother_married=1 then ma=1;
+drop mother_married;
+run;
+
+
+proc contents data=Sasuser.Natality8;run;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+if cigarette_use="false" then cigarette_use="FALSE";
+if cigarette_use="true" then cigarette_use="TRUE";
+run;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+if cigarette_use="FALSE" then cigarette_use=0;
+else if cigarette_use="TRUE" then cigarette_use=1;
+run;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+if alcohol_use="false" then alcohol_use="FALSE";
+if alcohol_use="true" then alcohol_use="TRUE";
+run;
+
+data Sasuser.Natality8;
+set Sasuser.Natality8;
+if alcohol_use="FALSE" then alcohol_use=0;
+else if alcohol_use="TRUE" then alcohol_use=1;
+run;
+
+data Sasuser.Natality9;
+set Sasuser.Natality8;
+rename weight_pounds=y  motherace1=x1 motherace2=x2 motherace3=x3 motherace4=x4 motherace5=x5 mother_age=x6
+       ma=x7  cigarette=x8 alcohol=x9 born_alive_alive=x10 born_alive_dead=x11 born_dead=x12 ever_born=x13 gestation_weeks=x14
+      weight_gain_pounds=x15 ;
+run;
+
+data Sasuser.Natality9;
+set Sasuser.Natality9;
+array x{15} x1-x15;
+run;
+	
+
+%macro regression(a=x, b=x, c=x , d=x);
+
+	proc reg data=Sasuser.Natality9 OUTEST=stat noprint;
+		model y= &a &b &c &d/edf;
+	run;	
+	
+	data stat_1;
+		set stat;
+		f= (_rsq_/_in_) / ((1- _rsq_)/_edf_ );
+		p=1 - probf(f, _in_, _edf_);
+	
+	if p<0.05 then
+	put "mode: Y = &a + &b + &c + &d;" @33 "R_square =" _rsq_  @58 "P_value =" p ;
+	output;
+	run;
+	
+%mend regression;
+
+%macro pick;
+	data _null_;
+		%do i=1 %to 12;
+			%do j=&i+1 %to 13;
+				%do k=&j+1 %to 14;
+					%do l=&k+1 %to 15;
+						%regression(a=x&i, b=x&j, c=x&k, d=x&l);
+					%end;
+				%end;
+			%end;
+		%end;
+
+	run;
+%mend;
+%pick;
+
+quit;
+
+
+proc freq data=Sasuser.Natality3;
+table state*pl/nopercent nocum;
+run;
+
+proc freq data=Sasuser.Natality3;
+table state*mrace/nocol nopercent nocum;
+run;
+
+proc freq data=Sasuser.Natality3;
+table state*mage/nocol nopercent nocum;
+run;
+
+proc freq data=Sasuser.Natality3;
+table state*cigarette_use/nocol nopercent nocum;
+run;
+
+proc freq data=Sasuser.Natality3;
+table weight*cigarette_use/norow nopercent nocum;
+run;
+
+proc freq data=Sasuser.Natality3;
+table weight*alcohol_use/norow nopercent nocum;
+run;
+
+proc freq data=Sasuser.Natality3;
+table weight*mage/norow nopercent nocum;
+run;
+
+proc freq data=Sasuser.Natality3;
+table weight*mrace/ nopercent nocum;
+run;
+
+
+
+proc freq data=Sasuser.Natality3;
+table weight*frace/norow nopercent nocum;
+run;
+
+
+proc freq data=Sasuser.Natality3;
+table weight*fage/norow nopercent nocum;
+run;
+4-14
+
+data incubator:
+
+
+
+
+%macro create(howmany);
+   %do i=2011 %to &howmany;
+     data Sasuser.calls&i;
+     infile "C:\Users\yepeng\Downloads\Calls_for_Service_&i..csv" delimiter = "," MISSOVER DSD firstobs=2 ;
+	 Informat	NOPD_Item	$8. ;
+Informat	Type_	$4. ;
+Informat	TypeText	$30.; 
+Informat	Priority	$2.;
+Informat	MapX	BEST32.;
+Informat	MapY	BEST32.;
+Informat	TimeCreate	ANYDTDTM40.;
+Informat	TimeDispatch	ANYDTDTM40.;
+Informat	TimeArrive	ANYDTDTM40.;
+Informat	TimeClosed	ANYDTDTM40.;
+Informat	Disposition	$3.;
+Informat	DispositionText	$22. ;
+Informat	BLOCK_ADDRESS	$40.;
+Informat	Zip	BEST32.;
+Informat	PoliceDistrict	BEST32.;
+Informat	Location	$42. ;
+Format	NOPD_Item	$8. 	;
+Format	Type_	$4. 	;
+Format	TypeText	$30. 	;
+Format	Priority	$2. 	;
+Format	MapX	BEST12.	;
+Format	MapY	BEST12.	;
+Format	TimeCreate	DATETIME.	;
+Format	TimeDispatch	DATETIME.	;
+Format	TimeArrive	DATETIME.	;
+Format	TimeClosed	DATETIME.	;
+Format	Disposition	$3.	;
+Format	DispositionText	$22. 	;
+Format	BLOCK_ADDRESS	$40.	;
+Format	Zip	BEST12.	;
+Format	PoliceDistrict	BEST12.	;
+Format	Location	$42. 	;
+ input NOPD_Item $  Type_ $ TypeText $ Priority $ MapX MapY TimeCreate TimeDispatch TimeArrive TimeClosed Disposition $
+           DispositionText $ BLOCK_ADDRESS $ Zip PoliceDistrict Location $ ;
+run;
+   %end;
+%mend create;
+
+%create(2015)
+
+%macro create(howmany);
+   %do i=2011 %to &howmany;
+     data Sasuser.call&i;
+	 set Sasuser.calls&i;
+	 year=&i;
+	 run;
+%end;
+%mend create;
+
+%create(2015)
+
+
+%macro create (howmany);
+
+data Sasuser.call;
+  set
+  %do i = 2011 %to &howmany;
+
+         Sasuser.call&i    
+     %end; 
+; 
+run;
+%mend create;
+%create(2015)
+                                                                                                                                              proc freq data=Sasuser.call;
+table type_;
+run;
+
+proc sql;
+create table Sasuser.a as
+select TimeArrive-TimeDispatch as rtime, PoliceDistrict
+from Sasuser.call
+where TimeArrive >=TimeDispatch;
+quit;
+
+proc sql;
+select rtime
+from Sasuser.a
+HAVING median(rtime)=rtime;
+quit;   
+
+ proc means data=Sasuser.a;
+class PoliceDistrict;
+var rtime;
+run;     
+
+proc sql ;
+create table Sasuser.b as
+select type_, PoliceDistrict,count(type_) as dcount
+from Sasuser.call
+group by type_ , PoliceDistrict;
+quit;
+
+proc sql ;
+create table Sasuser.c as
+select type_ , PoliceDistrict, dcount ,sum(dcount) as total
+from Sasuser.b
+where dcount > 100
+group by type_ ;
+quit;
+
+proc sql;
+create table Sasuser.d as
+select *, dcount/total as ratio
+from Sasuser.c
+order by ratio;
+quit;
+
+    proc freq data=Sasuser.call;
+table type_ * year/nocum nopercent ;
+run;
+
+proc freq data=Sasuser.call;
+table type_*priority;
+run;         
+
+4-27
+proc glm data=eg3_1;
+   class Power;
+   model Rate = Power;
+   means Power / LSD Bon Tukey Scheffe alpha = 0.05 HOVTEST;
+   output out = stat r=resid stdr=stdr;
+title "Multiple Comparison of Means";
+
+run;
+quit;      
+
+****Checking for violations of assumptions********;
+proc plot data =stat;
+   plot resid*predict/vref=0  vpos=25 hpos=65;  **vaxis=* to * by * haxis=* to * by *;
+   plot resid*material/vref=0 vpos=25 hpos=65;
+   plot resid*temperature/vref=0 vpos=25 hpos=65;	
+   title "Plots of Residuals vs. Predicted";
+run;
+
+
+*****Testing of Equality of Variances*****;  		*ONLY FOR ONE WAY ANOVA;
+proc anova data=eg1;								*USE PLOT RESID VS MATERIAL;
+  class material temperature;			   			*PLOT RESID VS TEMP; 
+  model life = material|temperature;
+  means material /hovtest = bartlett;  		*hovtest welch;        
+  means temperature /hovtest = bartlett;  	*hovtest welch;    
+  title "Testing of Equality of Variances";                       
+run;  quit;
+
+
+*****Testing of Normality**********;
+proc univariate data=stat plot normal;   ***Normal option provides Shapiro-Wilk Test***;
+   var  student  resid;
+run;  quit;
+
+
+proc sql;
+create table Sasuser.stat_sample as
+select A.*
+from stat as A
+where RANUNI(4321) between .499999 and .500000 ;
+quit;
+
+4-28
+data Sasuser.Natality4;
+set Sasuser.Natality4;
+drop motherace1 motherace2 motherace3 motherace4 motherace5 motherace6 fatherace1 fatherace2 fatherace3 fatherace4 fatherace5 fatherace6;
+run;
+
+proc glm data=Sasuser.natality4;
+   class mrace frace;
+   model weight_pounds=mother_age mrace cigarettes_per_day drinks_per_week ma baa bad bd ever_born gestation_weeks weight_gain_pounds plurality gender father_age frace/ solution;
+   output  out=stat  student=student p=predict r=resid stdr=stdr;
+run; quit;
+
+
+proc glm data=Sasuser.natality4;
+   class mrace ;
+   model weight_pounds=mother_age mrace cigarettes_per_day drinks_per_week ma baa bad bd ever_born gestation_weeks weight_gain_pounds / solution;
+   output  out=stat  student=student p=predict r=resid stdr=stdr;
+run; quit;
+
+proc sql;
+create table Sasuser.stat_sample1 as
+select A.*
+from stat as A
+where RANUNI(4321) between .4999 and .5000 ;
+quit;
+
+proc plot data =Sasuser.stat_sample1;
+   plot resid*predict/vref=0  vpos=25 hpos=100;  
+   run;
+
+proc univariate data=Sasuser.stat_sample1 plot normal;   ***Normal option provides Shapiro-Wilk Test***;
+   var  student  resid;
+run;  quit;
+
+         
+proc glm data=Sasuser.natality4;
+   model weight_pounds=mother_age motherace1 motherace2 motherace6 cigarettes_per_day drinks_per_week  baa bad bd ever_born gestation_weeks weight_gain_pounds fatherace2 fatherace3 father_age plurality gender / solution;
+   output  out=stat1  student=student p=predict r=resid stdr=stdr;
+run; quit;               
+
+5.3
+ods graphics on;
+PROC LOGISTIC DATA=Sasuser.Dc plot(maxpoints=none);
+class  gw mage mrace mother_married cigarette_use alcohol_use baa bad bd ever_born /param=ref;
+   MODEL weight= weight_gain_pounds gw mage mrace mother_married cigarette_use alcohol_use baa bad bd ever_born / influence iplots;
+ run; 
+ods graphics off;
+                 
